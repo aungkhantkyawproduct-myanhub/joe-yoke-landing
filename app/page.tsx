@@ -1,295 +1,326 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import Image from "next/image";
+import Link from "next/link";
+
+const STATS = [
+  { value: "2.4M+", label: "Active Players" },
+  { value: "180+", label: "Games Live" },
+  { value: "$12M", label: "Rewards Paid" },
+  { value: "4.9/5", label: "App Rating" },
+];
+
+const GAMES = [
+  {
+    title: "Neon Rush",
+    genre: "Arcade · Racing",
+    color: "from-primary/30 to-transparent",
+    accent: "text-primary",
+  },
+  {
+    title: "Shadow Arena",
+    genre: "PvP · Strategy",
+    color: "from-tertiary/30 to-transparent",
+    accent: "text-tertiary",
+  },
+  {
+    title: "Puzzle Forge",
+    genre: "Puzzle · Casual",
+    color: "from-secondary/30 to-transparent",
+    accent: "text-secondary",
+  },
+  {
+    title: "Skyline Legends",
+    genre: "RPG · Adventure",
+    color: "from-primary/30 to-transparent",
+    accent: "text-primary",
+  },
+];
+
+const FEATURES = [
+  {
+    title: "Real Rewards",
+    desc: "Turn your skill into points, badges, and prizes you can actually redeem.",
+  },
+  {
+    title: "Live Leaderboards",
+    desc: "Climb global and friend rankings updated in real time, every match.",
+  },
+  {
+    title: "Cross-Platform Play",
+    desc: "Start on web, keep your streak going on iOS and Android — one account.",
+  },
+  {
+    title: "Fair-Play Engine",
+    desc: "Anti-cheat and skill-based matchmaking keep every game honest.",
+  },
+];
+
+const COMMUNITY = [
+  {
+    name: "Thura K.",
+    role: "Top 100 Global",
+    quote:
+      "The tournaments feel like esports, not just a mobile game. I actually look forward to grinding the ladder.",
+  },
+  {
+    name: "Mia S.",
+    role: "Guild Leader, Skyline",
+    quote:
+      "Our guild runs weekly events through Joe Yoke's community tools. Coordination has never been this easy.",
+  },
+  {
+    name: "Zayar A.",
+    role: "Content Creator",
+    quote:
+      "Rewards are actually worth streaming for. My community earns alongside me every season.",
+  },
+];
 
 export default function Home() {
-  // State for Light/Dark Mode toggle
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  // Initialize the scroll reveal animations and WebGL Shader
-  useEffect(() => {
-    // Reveal Animation
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('opacity-100', 'translate-y-0');
-                entry.target.classList.remove('opacity-0', 'translate-y-5');
-            }
-        });
-    }, { threshold: 0.1 });
-    reveals.forEach(el => observer.observe(el));
-
-    // WebGL Shader Background
-    const canvas = document.getElementById('shader-canvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    function syncSize() {
-      const w = canvas.clientWidth || 1280;
-      const h = canvas.clientHeight || 720;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-    }
-    
-    if (typeof ResizeObserver !== 'undefined') {
-      new ResizeObserver(syncSize).observe(canvas);
-    }
-    syncSize();
-    
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext;
-    if (!gl) return;
-    
-    const vs = `attribute vec2 a_position; varying vec2 v_texCoord; void main() { v_texCoord = a_position * 0.5 + 0.5; gl_Position = vec4(a_position, 0.0, 1.0); }`;
-    const fs = `precision highp float; varying vec2 v_texCoord; uniform float u_time; void main() {
-        vec2 uv = v_texCoord;
-        vec2 center = vec2(0.5, 0.5);
-        float d = length(uv - center);
-        
-        // Base Neutral Color from Design System (#0B192C)
-        vec3 color = vec3(0.043, 0.098, 0.173); 
-        
-        float wave1 = sin(uv.x * 3.0 + u_time * 0.2) * 0.1;
-        float wave2 = cos(uv.y * 2.5 - u_time * 0.3) * 0.1;
-        
-        // Primary Neon Green/Yellow (#CCFF00) and Cyan (#00F0FF)
-        vec3 neonPrimary = vec3(0.8, 1.0, 0.0); 
-        vec3 neonCyan = vec3(0.0, 0.94, 1.0);      
-        
-        float mask1 = smoothstep(0.4, 0.0, length(uv - vec2(0.2 + wave1, 0.3 + wave2)));
-        float mask2 = smoothstep(0.5, 0.0, length(uv - vec2(0.8 - wave2, 0.7 + wave1)));
-        
-        color = mix(color, neonPrimary, mask1 * 0.3);
-        color = mix(color, neonCyan, mask2 * 0.2);
-        
-        float noise = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
-        color += noise * 0.02;
-        
-        gl_FragColor = vec4(color, 1.0);
-    }`;
-    
-    function cs(type: number, src: string) {
-      const s = gl.createShader(type)!;
-      gl.shaderSource(s, src);
-      gl.compileShader(s);
-      return s;
-    }
-    
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
-    gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(prog);
-    gl.useProgram(prog);
-    
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-    
-    const pos = gl.getAttribLocation(prog, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-    
-    const uTime = gl.getUniformLocation(prog, 'u_time');
-    
-    let animationFrameId: number;
-    function render(t: number) {
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      if (uTime) gl.uniform1f(uTime, t * 0.001);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      animationFrameId = requestAnimationFrame(render);
-    }
-    render(0);
-
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []);
-
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      <main className={`transition-colors duration-300 font-sans selection:bg-[#CCFF00]/30 min-h-screen overflow-x-hidden pt-[72px] ${isDarkMode ? 'bg-[#0B192C] text-white' : 'bg-gray-50 text-[#0B192C]'}`}>
-        
-        {/* Global Styles specific to this design */}
-        <style dangerouslySetInnerHTML={{__html: `
-          .glass-panel { background: ${isDarkMode ? 'rgba(45, 52, 73, 0.4)' : 'rgba(255, 255, 255, 0.8)'}; backdrop-filter: blur(24px); border-top: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}; border-left: 1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'}; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .glow-primary { box-shadow: 0 0 30px rgba(204, 255, 0, 0.2); }
-          .animate-float { animation: float 6s ease-in-out infinite; }
-          @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
-          .reveal { transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        `}} />
+    <main className="relative overflow-hidden bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white">
+      {/* Ambient background */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-grid-pattern bg-grid opacity-0 dark:opacity-100"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-primary/20 blur-[120px]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-40 top-96 h-96 w-96 rounded-full bg-tertiary/20 blur-[120px]"
+      />
 
-        {/* TopNavBar */}
-        <nav className={`fixed top-0 w-full z-50 backdrop-blur-xl border-b shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] transition-colors duration-300 ${isDarkMode ? 'bg-[#0B192C]/60 border-white/10' : 'bg-white/80 border-gray-200'}`}>
-          <div className="flex justify-between items-center px-6 md:px-12 py-4 max-w-7xl mx-auto">
-            
-            {/* Logo and Brand Name */}
-            <div className="flex items-center gap-3 cursor-pointer active:scale-95 duration-200">
-              <img src="/logo-nav.jpg" alt="Joe Yoke Logo" className={`h-10 w-10 object-contain rounded-lg ${!isDarkMode && 'invert'}`} />
-              <span className="font-extrabold text-[24px] md:text-[32px] tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#CCFF00] to-[#FF9F0A]">
-                JOE YOKE
+      {/* Hero */}
+      <section className="relative mx-auto flex max-w-7xl flex-col items-center px-5 pb-24 pt-20 text-center sm:px-8 sm:pt-28">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+          <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-primary" />
+          Season 4 is live now
+        </div>
+
+        <h1 className="max-w-3xl font-heading text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+          Play harder.
+          <br />
+          <span className="text-gradient">Earn what you win.</span>
+        </h1>
+
+        <p className="mt-6 max-w-xl text-base text-neutral-600 dark:text-neutral-300 sm:text-lg">
+          Joe Yoke is the premium gamification platform where every match,
+          quest, and streak turns into real rewards — and a community that
+          plays as hard as you do.
+        </p>
+
+        <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
+          <Link
+            href="#download"
+            className="w-full rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-neutral-900 shadow-glow transition-transform hover:scale-105 active:scale-95 sm:w-auto"
+          >
+            Download Joe Yoke
+          </Link>
+          <Link
+            href="#games"
+            className="w-full rounded-full border border-neutral-300 px-8 py-3.5 text-sm font-semibold text-neutral-900 transition-colors hover:border-primary/60 hover:bg-primary/5 dark:border-white/15 dark:text-white sm:w-auto"
+          >
+            Explore Games
+          </Link>
+        </div>
+
+        {/* Stats */}
+        <div className="mt-16 grid w-full grid-cols-2 gap-6 rounded-3xl border border-neutral-200 bg-neutral-50/60 p-6 sm:grid-cols-4 sm:p-8 card-glass">
+          {STATS.map((s) => (
+            <div key={s.label} className="flex flex-col items-center">
+              <span className="font-heading text-2xl font-bold text-primary sm:text-3xl">
+                {s.value}
+              </span>
+              <span className="mt-1 text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
+                {s.label}
               </span>
             </div>
-            
-            <div className="hidden md:flex gap-8 items-center">
-              <a className={`text-[16px] font-bold border-b-2 pb-1 cursor-pointer transition-colors ${isDarkMode ? 'text-[#CCFF00] border-[#CCFF00]' : 'text-[#8DB300] border-[#8DB300]'}`} href="#">Games</a>
-              <a className={`text-[16px] font-bold transition-colors cursor-pointer ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`} href="#">Community</a>
-              <a className={`text-[16px] font-bold transition-colors cursor-pointer ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-black'}`} href="#">Download App</a>
-              
-              {/* Theme Toggle Button */}
-              <button 
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className={`flex items-center p-2 rounded-full transition-colors cursor-pointer active:scale-95 duration-200 ${isDarkMode ? 'text-gray-300 hover:text-[#CCFF00] hover:bg-white/5' : 'text-gray-600 hover:text-[#8DB300] hover:bg-black/5'}`} 
-                title="Toggle Light/Dark Mode"
-              >
-                <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
-              </button>
-            </div>
-          </div>
-        </nav>
+          ))}
+        </div>
+      </section>
 
-        {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex items-center justify-center px-6 md:px-12 py-20 overflow-hidden">
-          {/* Only show the WebGL canvas in dark mode for contrast */}
-          <div className={`absolute inset-0 w-full h-full transition-opacity duration-500 ${isDarkMode ? 'opacity-60' : 'opacity-10'}`} style={{ display: 'block' }}>
-            <canvas id="shader-canvas" style={{ display: 'block', width: '100%', height: '100%' }}></canvas>
+      {/* Games */}
+      <section id="games" className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8">
+        <div className="mb-12 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <span className="font-mono text-xs uppercase tracking-widest text-tertiary">
+              Featured Titles
+            </span>
+            <h2 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">
+              Games worth mastering
+            </h2>
           </div>
+          <Link
+            href="#"
+            className="text-sm font-semibold text-primary hover:underline"
+          >
+            View all games →
+          </Link>
+        </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="text-center lg:text-left space-y-8 reveal opacity-0 translate-y-5">
-              <h1 className="text-[48px] md:text-[72px] font-extrabold leading-tight tracking-tight">
-                Play Together.<br />
-                <span className="text-[#00F0FF]">Laugh Together.</span>
-              </h1>
-              <p className={`text-[18px] max-w-lg mx-auto lg:mx-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                One app. Endless games. Infinite fun. Experience the world's most social gaming platform designed for groups, families, and friends.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <button className="px-8 py-4 bg-[#CCFF00] text-[#0B192C] rounded-xl font-bold text-[18px] hover:scale-105 hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition-all active:scale-95">
-                  Download App
-                </button>
-                <button className={`px-8 py-4 glass-panel rounded-xl font-bold text-[18px] transition-all active:scale-95 ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-[#0B192C] hover:bg-black/5'}`}>
-                  Explore Games
-                </button>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {GAMES.map((game) => (
+            <div
+              key={game.title}
+              className="group relative overflow-hidden rounded-2xl border border-neutral-200 p-6 transition-transform hover:-translate-y-1 dark:border-white/10 card-glass"
+            >
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${game.color} opacity-60`}
+              />
+              <div className="relative">
+                <div className="mb-16 h-28 w-full rounded-xl bg-neutral-900/5 dark:bg-white/5" />
+                <h3 className="font-heading text-lg font-bold">{game.title}</h3>
+                <p className={`mt-1 text-xs font-medium ${game.accent}`}>
+                  {game.genre}
+                </p>
               </div>
             </div>
-            
-            <div className="relative flex justify-center items-center reveal opacity-0 translate-y-5" style={{ transitionDelay: '200ms' }}>
-              {/* Floating Icons Background */}
-              <div className="absolute inset-0 z-0 overflow-visible">
-                <span className="material-symbols-outlined text-[#CCFF00] text-6xl absolute top-10 left-10 animate-float" style={{ animationDelay: '0s' }}>joystick</span>
-                <span className="material-symbols-outlined text-[#FF9F0A] text-7xl absolute bottom-20 right-10 animate-float" style={{ animationDelay: '1s' }}>casino</span>
-                <span className="material-symbols-outlined text-[#00F0FF] text-5xl absolute top-1/2 left-0 animate-float" style={{ animationDelay: '2s' }}>playing_cards</span>
-                <span className="material-symbols-outlined text-[#FF9F0A] text-6xl absolute bottom-0 left-1/4 animate-float" style={{ animationDelay: '3s' }}>emoji_events</span>
-              </div>
-              <div className={`relative glass-panel rounded-[40px] p-4 border glow-primary z-10 ${isDarkMode ? 'border-white/20' : 'border-gray-200'}`}>
-                <img className="w-[280px] h-[560px] object-cover rounded-[32px] shadow-2xl" alt="Mobile App Interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBi7n4UEHLoMlpjKqiZoXj19WbH7_mx7BQSQCc8YfTBWPx-dkGLfjqyFZC9ORGb7DpvfoycEAT4heB5v6-kkA07RHN5GELvJOPDRxiwOsIAmJtKo-4t61F54nzfxnAYWY6Ygnfsj5xsa2XxR0H4U-dxPjWMeP2iNBAaIQYcUOFYfJx59CypscHuSuBJpjteFfgGE5jbTi6deci1QRA2B8zua_yujokIO7ussRhTXXMRkqHh2N5SmY543S-9eAAQwfEVfr6QmZemmOE" />
-              </div>
-            </div>
-          </div>
-        </section>
+          ))}
+        </div>
+      </section>
 
-        {/* Trusted By */}
-        <section className={`py-12 border-y ${isDarkMode ? 'bg-[#060e20]/50 border-white/5' : 'bg-gray-100/50 border-gray-200'}`}>
-          <div className="max-w-7xl mx-auto px-12">
-            <p className="text-center text-xs text-gray-500 mb-8 uppercase tracking-widest font-bold">Trusted By</p>
-            <div className={`flex flex-wrap justify-center items-center gap-12 transition-all ${isDarkMode ? 'opacity-50 grayscale hover:grayscale-0' : 'opacity-70 grayscale hover:grayscale-0'}`}>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>apps</span>
-                <span className="text-[20px] font-bold">App Store</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>play_books</span>
-                <span className="text-[20px] font-bold">Google Play</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex -space-x-4">
-                  <div className={`w-10 h-10 rounded-full border-2 bg-[#FF9F0A] ${isDarkMode ? 'border-[#0B192C]' : 'border-white'}`}></div>
-                  <div className={`w-10 h-10 rounded-full border-2 bg-[#CCFF00] ${isDarkMode ? 'border-[#0B192C]' : 'border-white'}`}></div>
-                  <div className={`w-10 h-10 rounded-full border-2 bg-[#00F0FF] ${isDarkMode ? 'border-[#0B192C]' : 'border-white'}`}></div>
-                </div>
-                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-[#0B192C]'}`}>20M+ Active Players</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Game Categories */}
-        <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-          <h2 className="text-[32px] md:text-[40px] font-bold text-center mb-16 reveal opacity-0 translate-y-5">
-            Discover Your <span className={`${isDarkMode ? 'text-[#CCFF00]' : 'text-[#8DB300]'}`}>Vibe</span>
+      {/* Features */}
+      <section className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8">
+        <div className="mb-12 text-center">
+          <span className="font-mono text-xs uppercase tracking-widest text-secondary">
+            Why Joe Yoke
+          </span>
+          <h2 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">
+            Built for players who compete for real
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 reveal opacity-0 translate-y-5" style={{ transitionDelay: '100ms' }}>
-            {[
-              { icon: 'playing_cards', label: 'Card Games', color: isDarkMode ? 'text-[#CCFF00]' : 'text-[#8DB300]', bgHover: isDarkMode ? 'hover:bg-[#CCFF00]/10' : 'hover:bg-[#CCFF00]/30' },
-              { icon: 'grid_on', label: 'Board Games', color: 'text-[#FF9F0A]', bgHover: isDarkMode ? 'hover:bg-[#FF9F0A]/10' : 'hover:bg-[#FF9F0A]/20' },
-              { icon: 'sports_esports', label: 'Arcade', color: 'text-[#00F0FF]', bgHover: isDarkMode ? 'hover:bg-[#00F0FF]/10' : 'hover:bg-[#00F0FF]/20' },
-              { icon: 'celebration', label: 'Party', color: 'text-[#FF9F0A]', bgHover: isDarkMode ? 'hover:bg-[#FF9F0A]/10' : 'hover:bg-[#FF9F0A]/20' },
-              { icon: 'extension', label: 'Puzzle', color: isDarkMode ? 'text-[#CCFF00]' : 'text-[#8DB300]', bgHover: isDarkMode ? 'hover:bg-[#CCFF00]/10' : 'hover:bg-[#CCFF00]/30' },
-              { icon: 'precision_manufacturing', label: 'Strategy', color: 'text-[#FF9F0A]', bgHover: isDarkMode ? 'hover:bg-[#FF9F0A]/10' : 'hover:bg-[#FF9F0A]/20' },
-              { icon: 'match_case', label: 'Word', color: 'text-[#00F0FF]', bgHover: isDarkMode ? 'hover:bg-[#00F0FF]/10' : 'hover:bg-[#00F0FF]/20' },
-              { icon: 'coffee', label: 'Casual', color: 'text-[#FF9F0A]', bgHover: isDarkMode ? 'hover:bg-[#FF9F0A]/10' : 'hover:bg-[#FF9F0A]/20' }
-            ].map((item, i) => (
-              <div key={i} className={`glass-panel group p-8 rounded-2xl flex flex-col items-center gap-4 hover:scale-105 ${item.bgHover} transition-all cursor-pointer`}>
-                <span className={`material-symbols-outlined text-5xl ${item.color} group-hover:scale-125 transition-transform`}>{item.icon}</span>
-                <span className="font-bold text-[18px]">{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        </div>
 
-        {/* Download CTA */}
-        <section className="py-24 px-6 md:px-12 reveal opacity-0 translate-y-5">
-          <div className={`max-w-7xl mx-auto rounded-[48px] p-12 md:p-20 text-center relative overflow-hidden group border ${isDarkMode ? 'bg-gradient-to-br from-[#CCFF00]/20 to-[#00F0FF]/20 border-white/10' : 'bg-gradient-to-br from-[#CCFF00]/40 to-[#00F0FF]/40 border-[#0B192C]/10'}`}>
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-            <div className="relative z-10 space-y-8">
-              <h2 className={`text-[40px] md:text-[64px] font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-[#0B192C]'}`}>Ready to Start Playing?</h2>
-              <p className={`text-[18px] max-w-2xl mx-auto ${isDarkMode ? 'text-gray-300' : 'text-[#0B192C]/80'}`}>Join 20 million players worldwide. Download JOE YOKE today and turn every moment into a game night.</p>
-              <div className="flex flex-wrap justify-center gap-6">
-                <button className={`flex items-center gap-3 px-8 py-4 rounded-2xl hover:scale-105 transition-all ${isDarkMode ? 'bg-[#060e20] text-white border border-white/10' : 'bg-white text-[#0B192C] shadow-lg border border-gray-200'}`}>
-                  <span className="material-symbols-outlined text-3xl text-[#00F0FF]">apps</span>
-                  <div className="text-left">
-                    <div className="text-[10px] uppercase font-bold text-gray-400">Download on the</div>
-                    <div className="text-xl font-bold">App Store</div>
-                  </div>
-                </button>
-                <button className={`flex items-center gap-3 px-8 py-4 rounded-2xl hover:scale-105 transition-all ${isDarkMode ? 'bg-[#060e20] text-white border border-white/10' : 'bg-white text-[#0B192C] shadow-lg border border-gray-200'}`}>
-                  <span className="material-symbols-outlined text-3xl text-[#CCFF00]">play_books</span>
-                  <div className="text-left">
-                    <div className="text-[10px] uppercase font-bold text-gray-400">Get it on</div>
-                    <div className="text-xl font-bold">Google Play</div>
-                  </div>
-                </button>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-2xl border border-neutral-200 p-6 dark:border-white/10 card-glass"
+            >
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 font-heading text-primary">
+                ✦
+              </div>
+              <h3 className="font-heading text-base font-bold">{f.title}</h3>
+              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                {f.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Community */}
+      <section
+        id="community"
+        className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8"
+      >
+        <div className="mb-12 text-center">
+          <span className="font-mono text-xs uppercase tracking-widest text-primary">
+            Community
+          </span>
+          <h2 className="mt-2 font-heading text-3xl font-bold sm:text-4xl">
+            A community that plays together
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-neutral-600 dark:text-neutral-400 sm:text-base">
+            Guilds, tournaments, and live events keep the ladder moving —
+            join thousands of players building their legacy on Joe Yoke.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {COMMUNITY.map((c) => (
+            <div
+              key={c.name}
+              className="flex flex-col justify-between rounded-2xl border border-neutral-200 p-6 dark:border-white/10 card-glass"
+            >
+              <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+                “{c.quote}”
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-tertiary" />
+                <div>
+                  <p className="text-sm font-semibold">{c.name}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {c.role}
+                  </p>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Download */}
+      <section id="download" className="relative mx-auto max-w-7xl px-5 py-24 sm:px-8">
+        <div className="relative overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-50 p-10 text-center dark:border-white/10 dark:bg-neutral-800/40 card-glass sm:p-16">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/25 blur-[100px]"
+          />
+          <div className="relative mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl">
+            <Image
+              src="/logo-mark.png"
+              alt="Joe Yoke"
+              width={56}
+              height={56}
+              className="animate-float rounded-2xl"
+            />
           </div>
-        </section>
-        
-        {/* Footer */}
-        <footer className={`w-full py-12 px-6 md:px-12 border-t mt-12 transition-colors duration-300 ${isDarkMode ? 'bg-[#060e20] border-white/10' : 'bg-gray-100 border-gray-200'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 max-w-7xl mx-auto">
-            <div className="space-y-6">
-              <div className="text-[24px] font-black text-transparent bg-clip-text bg-gradient-to-r from-[#CCFF00] to-[#FF9F0A]">JOE YOKE</div>
-              <p className="text-gray-400 text-sm">Redefining social gaming through premium mobile experiences.</p>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-bold text-[#FF9F0A]">Explore</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a className={`transition-colors ${isDarkMode ? 'hover:text-[#CCFF00]' : 'hover:text-[#8DB300]'}`} href="#">Games Library</a></li>
-                <li><a className={`transition-colors ${isDarkMode ? 'hover:text-[#CCFF00]' : 'hover:text-[#8DB300]'}`} href="#">Latest News</a></li>
-              </ul>
-            </div>
-            <div className="space-y-4">
-              <h4 className="font-bold text-[#FF9F0A]">Company</h4>
-              <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a className={`transition-colors ${isDarkMode ? 'hover:text-[#CCFF00]' : 'hover:text-[#8DB300]'}`} href="#">Support</a></li>
-                <li><a className={`transition-colors ${isDarkMode ? 'hover:text-[#CCFF00]' : 'hover:text-[#8DB300]'}`} href="#">Privacy Policy</a></li>
-              </ul>
-            </div>
+          <h2 className="font-heading text-3xl font-bold sm:text-4xl">
+            Take Joe Yoke with you
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-sm text-neutral-600 dark:text-neutral-400 sm:text-base">
+            Download the app and keep every quest, reward, and rank synced
+            across web and mobile.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="#"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-105 dark:bg-white dark:text-neutral-900 sm:w-auto"
+            >
+              App Store
+            </Link>
+            <Link
+              href="#"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-neutral-900 shadow-glow-sm transition-transform hover:scale-105 sm:w-auto"
+            >
+              Google Play
+            </Link>
           </div>
-          <div className={`mt-12 pt-8 border-t text-center text-sm ${isDarkMode ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-500'}`}>
-            © {new Date().getFullYear()} JOE YOKE Gaming. All rights reserved.
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative border-t border-neutral-200 px-5 py-10 dark:border-white/10 sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/logo-mark.png"
+              alt="Joe Yoke"
+              width={28}
+              height={28}
+              className="rounded-lg"
+            />
+            <span className="font-heading text-sm font-bold">Joe Yoke</span>
           </div>
-        </footer>
-      </main>
-    </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            © {new Date().getFullYear()} Joe Yoke. All rights reserved.
+          </p>
+          <div className="flex gap-5 text-xs text-neutral-500 dark:text-neutral-400">
+            <Link href="#" className="hover:text-primary">
+              Privacy
+            </Link>
+            <Link href="#" className="hover:text-primary">
+              Terms
+            </Link>
+            <Link href="#" className="hover:text-primary">
+              Support
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 }
